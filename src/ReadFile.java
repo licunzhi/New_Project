@@ -1,9 +1,11 @@
 
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 /**
@@ -19,7 +21,7 @@ public class ReadFile {
      * @param fileName ： 文件的名字
      * @return ： 返回值的是二维数组
      */
-    public int[][] readFile(String fileName, int arr_x, int arr_y) {
+    public static int[][] readFile(String fileName, int arr_x, int arr_y) {
 
         int[][] user_movie = new int[arr_x][arr_y];//这些蓝色是定义在 Base类中的常量   代表的是具体的数字   创建二位数组存储数据
 
@@ -47,6 +49,20 @@ public class ReadFile {
         /*return preference;*/
         return user_movie;
 
+    }
+
+    public static void writeFile(String fileName, double[][] values) throws IOException {
+        BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));
+        for (int i = 0; i < values.length; i++) {
+            for (int j = 0; j < values[i].length; j++) {
+                if (values[i][j] != 0) {
+                    String line = (i + 1) + "\t" + (j + 1) + "\t" + values[i][j];
+                    bw.write(line);
+                    bw.newLine();
+                }
+            }
+        }
+        bw.close();
     }
 
 }

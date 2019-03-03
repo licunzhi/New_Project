@@ -1,14 +1,10 @@
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @ClassName Application
@@ -31,38 +27,21 @@ public class Application {
 //    private static final int K = 80;
 //    private static final int K = 90;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         // base数据集信息
-        int[][] base = new ReadFile().readFile("u1.base", 943, 1682);
+        int[][] base = ReadFile.readFile("u1.base", 943, 1682);
 
         // test数据集
-        int[][] test = new ReadFile().readFile("u1.test", 943, 1682);
+        int[][] test = ReadFile.readFile("u1.test", 943, 1682);
 
         // 用户相似度矩阵
         double[][] similarityMatrix = Application.produceSimilarityMatrix(base);
 
         // 分数预测结果
         double[][] matrix = predictScore(base, similarityMatrix);
-
-        System.out.println(">>>>>>>>>>>>>>>>>>>>开始进行召回率计算>>>>>>>>>>>>>>>>>>>>>>>>>");
-        int top_zhaohui = 0;
-        int buttom_zhaohui = 0;
-        int buttom_zhunque = 0;
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                if (matrix[i][j] != 0 && test[i][j] != 0) {
-                    top_zhaohui++;
-                }
-                if (test[i][j] != 0) {
-                    buttom_zhaohui++;
-                }
-                if (matrix[i][j] != 0) {
-                    buttom_zhunque++;
-                }
-            }
-        }
-        System.out.println("召回率计算结果：" + top_zhaohui/ 1.0 / buttom_zhaohui);
+        ReadFile.writeFile("k-10.txt", matrix);
+        //double[][] similarityMatrix = ReadFile.readFile("k-10.txt", 943, 1682);
     }
 
 
@@ -120,6 +99,7 @@ public class Application {
         // 相似度的存储数据格式为：用户index 用户相似度value
         Map<Integer, Double> result = sortByValueDescending(neberMap);
 
+        // 按照顺序新取出最大的K个
         Map<Integer, Double> final_result = new HashMap<>();
         int k_value = 0;
         for (Map.Entry<Integer, Double> entry : result.entrySet()) {
@@ -134,6 +114,12 @@ public class Application {
                 break;
             }
         }
+        //===========================================================
+        // 临时添加舍弃不满足K个的
+        if (k_value < K) {
+            final_result.clear();
+        }
+        //===========================================================
         return final_result;
     }
 
