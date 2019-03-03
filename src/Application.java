@@ -40,8 +40,38 @@ public class Application {
 
         // 分数预测结果
         double[][] matrix = predictScore(base, similarityMatrix);
-        ReadFile.writeFile("k-10.txt", matrix);
-        //double[][] similarityMatrix = ReadFile.readFile("k-10.txt", 943, 1682);
+        ReadFile.writeFile("k-20.txt", matrix);
+        //double[][] matrix = ReadFile.readFileDouble("k-10.txt", 943, 1682);
+
+        double[] mae = Application.produceMAE(matrix, test);
+        double Mae = 0.0, MAE = 0.0;
+        for (int k = 0; k < mae.length; k++) {
+            Mae += mae[k];
+        }
+        MAE = Mae / 462;//平均误差之和/测试集项目数----平均绝对偏差   变异系数越小越稳定
+
+        System.out.println("MAE=:" + MAE);
+
+        System.out.println(">>>>>>>>>>>>>>>>>>>>开始进行召回率计算>>>>>>>>>>>>>>>>>>>>>>>>>");
+        int top_zhaohui = 0;
+        int buttom_zhaohui = 0;
+        int buttom_zhunque = 0;
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (matrix[i][j] != 0 && test[i][j] != 0) {
+                    top_zhaohui++;
+                }
+                if (test[i][j] != 0) {
+                    buttom_zhaohui++;
+                }
+                if (matrix[i][j] != 0) {
+                    buttom_zhunque++;
+                }
+            }
+        }
+        System.out.println("召回率计算结果：" + top_zhaohui/ 1.0 / buttom_zhaohui);
+        System.out.println(">>>>>>>>>>>>>>>>>>>>开始进行准确率计算>>>>>>>>>>>>>>>>>>>>>>>>>");
+        System.out.println("准确率计算结果：" + top_zhaohui/ 1.0 / buttom_zhunque);
     }
 
 
@@ -67,8 +97,10 @@ public class Application {
                     double sum = 0;// 分子
                     double score = 0;
                     for (Map.Entry<Integer, Double> entry : nebers.entrySet()) {
-                        sum += similarityMatrix[i][entry.getKey()]* base[entry.getKey()][j];//预测分数的算法：不同的相关系数*同一用户的不同电影的分数之和
-                        similaritySum += similarityMatrix[i][entry.getKey()];//相似度值和
+                        if (base[entry.getKey()][j] != 0) {
+                            sum += similarityMatrix[i][entry.getKey()]* base[entry.getKey()][j];//预测分数的算法：不同的相关系数*同一用户的不同电影的分数之和
+                            similaritySum += similarityMatrix[i][entry.getKey()];//相似度值和
+                        }
                     }
 
                     // 预测分数计算
@@ -88,14 +120,20 @@ public class Application {
     private static Map<Integer, Double> findNeBers(int[][] base, double[][] similarityMatrix, int i, int j) {
         Map<Integer, Double> neberMap = new HashMap<>();
 
-        // 查找K近邻的方法
-        for (int u = 0; u < 943; u++) {
+        // 查找K近邻的方法==物品身份=================================
+        /*for (int u = 0; u < 943; u++) {
             if (base[u][j] != 0) { // 用户u对物品j存在评分
                 neberMap.put(u, similarityMatrix[i][u]);
             } else {
                 neberMap.put(u, 0.0);
             }
+        }*/
+        //===============用户身份=====================================
+        double[] sim_i = similarityMatrix[i];
+        for (int index = 0; index < sim_i.length; index++) {
+            neberMap.put(index, sim_i[index]);
         }
+
         // 相似度的存储数据格式为：用户index 用户相似度value
         Map<Integer, Double> result = sortByValueDescending(neberMap);
 
@@ -116,9 +154,9 @@ public class Application {
         }
         //===========================================================
         // 临时添加舍弃不满足K个的
-        if (k_value < K) {
+        /*if (k_value < K) {
             final_result.clear();
-        }
+        }*/
         //===========================================================
         return final_result;
     }
@@ -200,12 +238,30 @@ public class Application {
         if(den==0) result=0;
         else result = sum / den;
         //n∑xiyi-∑xi∑yi/√((n∑xi-(∑xi2)2)*(n∑yi-(∑yi2)2))
-        return result;
+        return Math.abs(result);
     }
 
-
-
-
+    private static double[] produceMAE(double[][] m, int[][] test) {
+        double mae = 0.0;
+        double[] mm = new double[462];
+        for (int i = 0; i < 462; i++) {
+            double sum_fencha = 0.0;
+            int num = 0;
+            for (int j = 0; j < 1682; j++) {
+                if (test[i][j] != 0 && m[i][j] != 0) {
+                    sum_fencha += Math.abs(m[i][j] - (double) test[i][j]);//|计算的分数-测试集的分数|
+                    num++;
+                }
+            }
+            if (num == 0) {
+                mae = 0;
+            } else {
+                mae = sum_fencha / num;//求平均误差
+            }
+            mm[i] = mae;
+        }
+        return mm;
+    }
 
 
 }
