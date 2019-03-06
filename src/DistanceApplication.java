@@ -12,56 +12,45 @@ import java.util.Map;
  * @Author lcz
  * @Date 2019/03/02 19:52
  */
-public class Application {
+public class DistanceApplication {
+
 
     // 代码中常量设置位置
 
     // K值设置
-    private static final int K = 10;
-//    private static final int K = 20;
-//    private static final int K = 30;
-//    private static final int K = 40;
-//    private static final int K = 50;
-//    private static final int K = 60;
-//    private static final int K = 70;
-//    private static final int K = 80;
-//    private static final int K = 90;
+//    private static final int K = 10;
+    //    private static final int K = 20;
+        private static final int K = 30;
+    //    private static final int K = 40;
+    //    private static final int K = 50;
+    //    private static final int K = 60;
+    //    private static final int K = 70;
+    //    private static final int K = 80;
+    //    private static final int K = 90;
 
     public static void main(String[] args) throws IOException {
 
         // base数据集信息
-        int[][] base = ReadFile.readFile("u1.base", 943, 1682);
-
-        Map<Integer, Double> params = new HashMap<>();
-        for (int i = 0; i < 1682; i++) {
-            int count = 0;
-            for (int j = 0; j < 943; j++) {
-                if (base[j][i] != 0) {
-                    count++;
-                }
-            }
-            params.put(i, count/80000.0);
-        }
-
+        int[][] base = ReadFile.readFile("u1.base", 1682, 943);
 
         // test数据集
-        int[][] test = ReadFile.readFile("u1.test", 943, 1682);
+        int[][] test = ReadFile.readFile("u1.test", 1682, 943);
 
         // 用户相似度矩阵
-        double[][] similarityMatrix = Application.produceSimilarityMatrix(base);
-        ReadFile.writeFile("k-10-sim", similarityMatrix);
+        double[][] similarityMatrix = DistanceApplication.produceSimilarityMatrix(base);
+        ReadFile.writeFile("k-10-item-sim", similarityMatrix);
 
         // 分数预测结果
         double[][] matrix = predictScore(base, similarityMatrix);
         ReadFile.writeFile("k-20.txt", matrix);
         //double[][] matrix = ReadFile.readFileDouble("k-10.txt", 943, 1682);
 
-        double[] mae = Application.produceMAE(matrix, test);
+        double[] mae = DistanceApplication.produceMAE(matrix, test);
         double Mae = 0.0, MAE = 0.0;
         for (int k = 0; k < mae.length; k++) {
             Mae += mae[k];
         }
-        MAE = Mae / 462;//平均误差之和/测试集项目数----平均绝对偏差   变异系数越小越稳定
+        MAE = Mae / 1682;//平均误差之和/测试集项目数----平均绝对偏差   变异系数越小越稳定
 
         System.out.println("MAE=:" + MAE);
 
@@ -82,9 +71,9 @@ public class Application {
                 }
             }
         }
-        System.out.println("召回率计算结果：" + top_zhaohui/ 1.0 / buttom_zhaohui);
+        System.out.println("召回率计算结果：" + top_zhaohui / 1.0 / buttom_zhaohui);
         System.out.println(">>>>>>>>>>>>>>>>>>>>开始进行准确率计算>>>>>>>>>>>>>>>>>>>>>>>>>");
-        System.out.println("准确率计算结果：" + top_zhaohui/ 1.0 / buttom_zhunque);
+        System.out.println("准确率计算结果：" + top_zhaohui / 1.0 / buttom_zhunque);
     }
 
 
@@ -92,7 +81,7 @@ public class Application {
     // 预测评分
     private static double[][] predictScore(int[][] base, double[][] similarityMatrix) {
 
-        double[][] matrix = new double[943][1682];// 预测的分数结果矩阵 （用户index 预测分数）
+        double[][] matrix = new double[1682][943];// 预测的分数结果矩阵 （用户index 预测分数）
 
 
         for (int i = 0; i < base.length; i++) {
@@ -111,7 +100,8 @@ public class Application {
                     double score = 0;
                     for (Map.Entry<Integer, Double> entry : nebers.entrySet()) {
                         if (base[entry.getKey()][j] != 0) {
-                            sum += similarityMatrix[i][entry.getKey()]* base[entry.getKey()][j];//预测分数的算法：不同的相关系数*同一用户的不同电影的分数之和
+                            sum += similarityMatrix[i][entry.getKey()] * base[entry
+                                            .getKey()][j];//预测分数的算法：不同的相关系数*同一用户的不同电影的分数之和
                             similaritySum += similarityMatrix[i][entry.getKey()];//相似度值和
                         }
                     }
@@ -175,8 +165,7 @@ public class Application {
     }
 
     //降序排序map中的value数据
-    private static <K, V extends Comparable<? super V>> Map<K, V> sortByValueDescending(Map<K, V> map)
-    {
+    private static <K, V extends Comparable<? super V>> Map<K, V> sortByValueDescending(Map<K, V> map) {
         List<Map.Entry<K, V>> list = new LinkedList<>(map.entrySet());
         list.sort((o1, o2) -> {
             int compare = (o1.getValue()).compareTo(o2.getValue());
@@ -192,22 +181,19 @@ public class Application {
 
 
 
-
-
-
     // 计算相似度
     private static double[][] produceSimilarityMatrix(int[][] base) {
-        double[][] similarityMatrix = new double[943][943];
+        double[][] similarityMatrix = new double[1682][1682];
 
-        for (int i = 0; i < 943; i++) {
-            for (int j = 0; j < 943; j++) {
+        for (int i = 0; i < 1682; i++) {
+            for (int j = 0; j < 1682; j++) {
                 // 用户自己和自己相似度为1
                 if (i == j) {
                     similarityMatrix[i][j] = 1;
                 }
                 // 计算和其他用户相似度
                 else {
-                    similarityMatrix[i][j] = Application.computeSimilarity(base[i], base[j]);
+                    similarityMatrix[i][j] = DistanceApplication.computeSimilarity(base[i], base[j]);
                 }
             }
         }
@@ -220,18 +206,18 @@ public class Application {
         List<Integer> list2 = new ArrayList<>();
         int j = 0;
         for (int i = 0; i < item1.length; i++) {
-            if(item1[i] != 0 && item2[i] !=0) {
+            if (item1[i] != 0 && item2[i] != 0) {
                 list1.add(item1[i]);
                 list2.add(item2[i]);
             }
             j++;
         }
         //研究计算相似度的方法具体的实现   返回的是相似度的参数
-        return Application.pearsonCorrelation(list1,list2);
+        return DistanceApplication.pearsonCorrelation(list1, list2);
     }
 
     private static double pearsonCorrelation(List<Integer> a, List<Integer> b) {
-        int num = a.size();//集合a作为参照集  用户i
+        /*int num = a.size();//集合a作为参照集  用户i
         int sum_prefOne = 0;
         int sum_prefTwo = 0;
         int sum_squareOne = 0;
@@ -245,22 +231,33 @@ public class Application {
             sum_product += a.get(i) * b.get(i);//∑xiyi
         }
         double sum = num * sum_product - sum_prefOne * sum_prefTwo;//n∑xiyi-∑xi∑yi
-        double den = Math.sqrt((num * sum_squareOne - Math.pow(sum_squareOne, 2)) * (num * sum_squareTwo - Math.pow(sum_squareTwo, 2)));
+        double den = Math.sqrt((num * sum_squareOne - Math.pow(sum_squareOne, 2)) * (num * sum_squareTwo - Math
+                        .pow(sum_squareTwo, 2)));
         //√((n∑xi-(∑xi2)2)*(n∑yi-(∑yi2)2))------这就是皮尔逊相关系数
         double result;
-        if(den==0) result=0;
-        else result = sum / den;
+        if (den == 0)
+            result = 0;
+        else
+            result = sum / den;
         //n∑xiyi-∑xi∑yi/√((n∑xi-(∑xi2)2)*(n∑yi-(∑yi2)2))
-        return Math.abs(result);
+        return Math.abs(result);*/
+        int num = a.size();
+        double dist = 0;
+        for (int i = 0; i < num; i++) {
+            dist += Math.pow(a.get(i) - b.get(i), 2);
+        }
+        dist = Math.sqrt(dist);
+
+        return 1/(1 + dist);
     }
 
     private static double[] produceMAE(double[][] m, int[][] test) {
         double mae;
-        double[] mm = new double[462];
-        for (int i = 0; i < 462; i++) {
+        double[] mm = new double[1682];
+        for (int i = 0; i < 1682; i++) {
             double sum_fencha = 0.0;
             int num = 0;
-            for (int j = 0; j < 1682; j++) {
+            for (int j = 0; j < 943; j++) {
                 if (test[i][j] != 0 && m[i][j] != 0) {
                     sum_fencha += Math.abs(m[i][j] - (double) test[i][j]);//|计算的分数-测试集的分数|
                     num++;
@@ -278,3 +275,4 @@ public class Application {
 
 
 }
+
